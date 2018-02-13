@@ -31,6 +31,7 @@ for (i in (seq(1,(length(names(data))-4),2))) {
     print(paste("Of these mismatches ",dim(double_dropout)[1]," (",round(((dim(double_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2),"% of mismatching loci) are homozygous for both samples",sep=""))
     print(paste("Of these mismatches ",dim(single_dropout)[1]," (",round(((dim(single_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2),"% of mismatching loci) are homozygous in one sample and heterozygous in the other",sep=""))
     output <- add_row(output,sample1=col1, sample2=col3,total_SNPs=dim(rows_with_data_for_both)[1],mismatched_SNPs=dim(mismatching_SNPs)[1],mismatch_perc=round(((dim(mismatching_SNPs)[1])/(dim(rows_with_data_for_both)[1])*100),2),mismatch_both_hets=dim(hard_mismatch_both_hets)[1],both_hets_perc=round(((dim(hard_mismatch_both_hets)[1])/(dim(mismatching_SNPs)[1])*100),2),mismatch_both_homs=dim(double_dropout)[1],both_homs_perc=round(((dim(double_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2),mismatch_het_hom=dim(single_dropout)[1],perc_het_hom=round(((dim(single_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2))
+    write.table(output,"summary_of_mismatches.txt")
   }
 }
 }
