@@ -1,6 +1,5 @@
 SNP_mismatch <- function(working_dir,input_structure_file) {
   setwd(working_dir)
-  #dplyr to look at the "best" version of individual 3
   library(tidyverse)
   write.csv(t(read.table(input_structure_file,header=FALSE)),"transposed_structure.csv",row.names=FALSE,quote=FALSE)
   data <- readr::read_csv("transposed_structure.csv",skip=1)
