@@ -2,7 +2,7 @@ SNP_mismatch <- function(working_dir,input_structure_file) {
   setwd(working_dir)
   #dplyr to look at the "best" version of individual 3
   library(tidyverse)
-  write.csv(t(read.table(structure_file,header=FALSE)),"transposed_structure.csv",row.names=FALSE,quote=FALSE)
+  write.csv(t(read.table(input_structure_file,header=FALSE)),"transposed_structure.csv",row.names=FALSE,quote=FALSE)
   data <- readr::read_csv("transposed_structure.csv",skip=1)
   
   output <- tibble(sample1 = character(), sample2 = character(), total_SNPs = integer(), mismatched_SNPs = integer(), mismatch_perc = integer(), mismatch_both_hets = integer(), both_hets_perc = integer(), mismatch_both_homs = integer(), non_both_hets_both_homs_perc = integer(), mismatch_het_hom = integer(), non_both_hets_perc_het_hom = integer())
