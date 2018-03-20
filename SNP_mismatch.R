@@ -42,5 +42,7 @@ ggplot(output,aes(x = total_SNPs, y = mismatch_perc, color=non_both_hets_perc_he
   scale_colour_gradient2(low="blue",mid="purple",midpoint=plot_midpoint,high="red")+
   labs(x = "Total number of SNPs in pairwise comparison", y = "% of SNPs showing mismatch", colour = "% of non het/het\n mismatches that\n were het/hom", size = "# of total\n mismatches that\n were het/het" )
 
+ggsave(filename = "plot_of_mismatches.pdf",plot = last_plot(), device = "pdf")
+  
 write.table(output,"pairwise_SNP_matching.txt",quote=FALSE,row.names=FALSE)
 }
