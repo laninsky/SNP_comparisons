@@ -35,7 +35,7 @@ SNP_mismatch <- function(working_dir,input_structure_file) {
 output %>% arrange(mismatch_perc)
 library("ggplot2")
 
-plot_midpoint=((max(output$non_both_hets_perc_het_hom))+(min(output$non_both_hets_perc_het_hom)))/2
+plot_midpoint=((max(output$non_both_hets_perc_het_hom,na.rm=TRUE))+(min(output$non_both_hets_perc_het_hom,na.rm=TRUE)))/2
 
 ggplot(output,aes(x = total_SNPs, y = mismatch_perc, color=non_both_hets_perc_het_hom, size=mismatch_both_hets)) +
   geom_point() +
