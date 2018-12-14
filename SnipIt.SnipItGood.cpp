@@ -70,7 +70,7 @@ class Sample {
         ~Sample();
         void addCharToTitle(int i, char c);
         void CopyName(vector<char> *copyname);
-        bool AddToAllele(int i, int newvalue);
+        void AddToAllele(int i, int newvalue);
         bool firstOnQueue(int i, int *value);
         bool NextOnQueue(int i, int *value);
 };
@@ -93,7 +93,7 @@ void Sample::CopyName(vector<char> *copyname){
     copyname = &samplename;
 }
 
-bool Sample::AddToAllele(int i, int newvalue){
+void Sample::AddToAllele(int i, int newvalue){
     alleolelist[i].AddtoFront(newvalue);
 }
 
