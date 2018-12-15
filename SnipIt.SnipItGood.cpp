@@ -35,7 +35,9 @@ List<T>::List() {
 
 template <class T>
 List<T>::~List() {
-
+    // if (front != NULL){
+    //     delete front;
+    // }
 }
 
 template <class T>
@@ -69,23 +71,14 @@ class Sample {
         class List<int> alleolelist[2];
     
     public:
-        Sample();
-        ~Sample();
+        Sample(){};
+        ~Sample(){};
         void MakeTitle(string s);
         void CopyName(string *copyname);
         void AddToAllele(int i, int newvalue);
         bool firstOnQueue(int i, int &value);
         bool NextOnQueue(int i, int &value);
 };
-
-Sample::Sample() {
-
-
-}
-
-Sample::~Sample() {
-
-}
 
 void Sample::MakeTitle(string s){
     samplename = s;
@@ -117,7 +110,7 @@ void sortSnips(int value[2][2]){
         value[0][0] = value[0][1];
         value[0][1] = temp; 
     }
-        if (value[1][0] > value[1][1]) {
+    if (value[1][0] > value[1][1]) {
         temp = value[1][0];
         value[1][0] = value[1][1];
         value[1][1] = temp; 
