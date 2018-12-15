@@ -35,9 +35,9 @@ List<T>::List() {
 
 template <class T>
 List<T>::~List() {
-    // if (front != NULL){
-    //     delete front;
-    // }
+    if (front != NULL) {
+        delete front;
+    }
 }
 
 template <class T>
@@ -86,8 +86,6 @@ void Sample::MakeTitle(string s){
 
 void Sample::CopyName(string *copyname){
     *copyname = samplename;
-    // string dog = *copyname;
-    // std::cout << dog << endl;
 }
 
 void Sample::AddToAllele(int i, int newvalue){
@@ -205,7 +203,7 @@ int CheckHetHetMisMatch( int value[2][2]){
 
 int main( int argc, char** argv ){ //get arguments from command line, i.e., yourexec filename
 	int i,j, SampleCount, ChromosoneCount;
-    vector <Sample> AllSamples;
+    vector <Sample*> AllSamples;
 
     cout << "Welcome to SnipIt.SnipItGood" << endl << endl;
     cout << "Loading File" << endl << endl;
@@ -213,7 +211,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
     int lowindex, highindex;
     char delim;
 
-    cout << "Enter the lowest allele index number used (ex 0 1 2 3 with a -9 for a non sample then enter 0)" << endl;
+    cout << "Enter the lowest allele index number used (ex 0 1 2 3 with a -9 for missing data then enter 0)" << endl;
     cin >> lowindex;
     highindex = lowindex + 3;
     cout << "So the highest allele index number is " << highindex << endl;
@@ -222,7 +220,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
     cin.ignore();
     delim = cin.get();
 
-    cout << "Thank you, if the output file is all 0's try a different delim character" << endl;
+    cout << "Thank you, if the output file is all 0's or "<< endl << "the program errors try a different delim character" << endl;
 
 	ifstream input_file;
 	if(argc < 2) {
@@ -247,9 +245,9 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
 
             getline(line, Token, delim);
             if ( i % 2 == 0) {
-                class Sample s;
-                AllSamples.push_back(s);
-                AllSamples[idiv2].MakeTitle( Token);
+                
+                AllSamples.push_back(new Sample);
+                AllSamples[idiv2]->MakeTitle( Token);
                 // string temp1;                        // Debugging to see that names ae loading correctly
                 // AllSamples[idiv2].CopyName(&temp1);
                 // std::cout << temp1 << endl;
@@ -259,9 +257,9 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
                 // cout << Token << endl; // for debugging
                 if (Token[0] == '-' || isdigit(Token[0]) ) {
                     int mynumber  = stoi(Token );
-                    AllSamples[idiv2].AddToAllele((i % 2), mynumber); // to add to the correct array of allele queues
+                    AllSamples[idiv2]->AddToAllele((i % 2), mynumber); // to add to the correct array of allele queues
                     // int temp;
-                    // AllSamples[idiv2].firstOnQueue((i%2), temp);   // Debugging code             
+                    // AllSamples[idiv2]->firstOnQueue((i%2), temp);   // Debugging code             
                     // std::cout << temp << endl;
                 }
             }
@@ -274,11 +272,11 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
     }
     // bool ok22; //debugging printout
     // int temp73;
-    // ok22 = AllSamples[0].firstOnQueue(0, temp73);
+    // ok22 = AllSamples[0]->firstOnQueue(0, temp73);
     
     // while (ok22) {
     //        std::cout << temp73 << " | ";
-    //     ok22 = AllSamples[0].NextOnQueue(0, temp73);
+    //     ok22 = AllSamples[0]->NextOnQueue(0, temp73);
      
     // }
     // std::cout << endl ;
@@ -289,11 +287,11 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
     //std::cout << SampleCount << endl;
     i=0;
     float k = 0;
-    ofstream output_file ( strcat( argv[1], ".output.txt"));
+    ofstream output_file ( strcat( argv[1], ".output.csv"));
     
     if ( output_file.is_open() ){
-        output_file << "# sample1 \t\t\t| sample2 \t\t\t| total SNPs \t| mismatched SNPs \t| mismatch % \t| Hom Hom (ex: 00 11) \t| Hom Homs % \t| ";
-        output_file << "Het Hom Lap (ex: 00 01) \t| Het Hom Lap % \t| Het Hom non Lap (ex 00 12) \t| Het Hom non Lap % \t| Het Het (ex: 01 12 or 01 23) \t| Het Het %\n";
+        output_file << "sample1,sample2,total SNPs,mismatched SNPs,mismatch %,Hom Hom (ex: 00 11),Hom Homs %,";
+        output_file << "Het Hom Lap (ex: 00 01),Het Hom Lap %,Het Hom non Lap (ex 00 12),Het Hom non Lap %,Het Het (ex: 01 12 or 01 23),Het Het %\n";
  
         int TotalSnps, mismatchedSnps, mismatchBothHoms, mismatchHetHomOverlap, mismatchHetHomNonOverlap, mismatchHetHet;
         float mismatchedSnpsPerc, mismatchBothHomsPerc, mismatchHetHomOverlapPerc, mismatchHetHomNonOverlapPerc, mismatchHetHetPerc;
@@ -313,10 +311,10 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
                 
                 int value[2][2];                                      // Load an array with the sample values for comparison
                 bool ok1, ok2, ok3, ok4;
-                ok1 =  AllSamples[i].firstOnQueue(0, value[0][0]);   // i is the first sample name to compare, 0 is the 1st allele from that sample name
-                ok2 =  AllSamples[i].firstOnQueue(1, value[0][1]);   // i is the first sample name to compare, 1 is the 2nd allele from that sample name
-                ok3 =  AllSamples[j].firstOnQueue(0, value[1][0]);   // j is the second sample name to compare, 0 is the 1st allele from that sample name
-                ok4 =  AllSamples[j].firstOnQueue(1, value[1][1]);   // j is the second sample name to compare, 1 is the 2nd allele from that sample name
+                ok1 =  AllSamples[i]->firstOnQueue(0, value[0][0]);   // i is the first sample name to compare, 0 is the 1st allele from that sample name
+                ok2 =  AllSamples[i]->firstOnQueue(1, value[0][1]);   // i is the first sample name to compare, 1 is the 2nd allele from that sample name
+                ok3 =  AllSamples[j]->firstOnQueue(0, value[1][0]);   // j is the second sample name to compare, 0 is the 1st allele from that sample name
+                ok4 =  AllSamples[j]->firstOnQueue(1, value[1][1]);   // j is the second sample name to compare, 1 is the 2nd allele from that sample name
 
                
                 while (ok1 && ok2 && ok3 && ok4) {
@@ -340,10 +338,10 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
                     }
 
                     // std::cout << value[0][0] << value[0][1] << value[1][0] << value[1][1] << endl; // for debugging
-                    ok1 =  AllSamples[i].NextOnQueue(0, value[0][0]);   // i is the first sample name to compare, 0 is the 1st allele from that sample name
-                    ok2 =  AllSamples[i].NextOnQueue(1, value[0][1]);   // i is the first sample name to compare, 1 is the 2nd allele from that sample name
-                    ok3 =  AllSamples[j].NextOnQueue(0, value[1][0]);   // j is the second sample name to compare, 0 is the 1st allele from that sample name
-                    ok4 =  AllSamples[j].NextOnQueue(1, value[1][1]);
+                    ok1 =  AllSamples[i]->NextOnQueue(0, value[0][0]);   // i is the first sample name to compare, 0 is the 1st allele from that sample name
+                    ok2 =  AllSamples[i]->NextOnQueue(1, value[0][1]);   // i is the first sample name to compare, 1 is the 2nd allele from that sample name
+                    ok3 =  AllSamples[j]->NextOnQueue(0, value[1][0]);   // j is the second sample name to compare, 0 is the 1st allele from that sample name
+                    ok4 =  AllSamples[j]->NextOnQueue(1, value[1][1]);
 
                 }
 
@@ -357,8 +355,8 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
 
                 string sample1, sample2 , SnpsPerc, BothHomsPerc, HomLapPerc, HetHomNonLapPerc, HetHetPerc;
 
-                AllSamples[i].CopyName(&sample1);
-                AllSamples[j].CopyName(&sample2);
+                AllSamples[i]->CopyName(&sample1);
+                AllSamples[j]->CopyName(&sample2);
 
                 stringstream temp22;
 
@@ -383,11 +381,11 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
                 // temp22.str("");
 
                 // std::cout << sample1 << " vs " << sample2 << endl; //for debugging
-                output_file << left << setw(19) << sample1 << " | " << setw(17) << sample2 << " | " << setw(13) << TotalSnps 
-                        << " | " << setw(17) << mismatchedSnps << " | " <<  setw(13) << SnpsPerc << " | " << setw(21) << mismatchBothHoms << " | " 
-                        << setw(13) << BothHomsPerc << " | " << setw(19+6) << mismatchHetHomOverlap << " | " << setw(19-2) << HomLapPerc << " | " 
-                        << setw(19+10) << mismatchHetHomNonOverlap << " | " << setw(19+2) << HetHomNonLapPerc << " | " 
-                        << setw(19+10) << mismatchHetHet << " | " << setw(19) << HetHetPerc << endl;
+                output_file  << sample1 << ","  << sample2 << "," << TotalSnps 
+                        << "," << mismatchedSnps << "," << SnpsPerc << "," << mismatchBothHoms << "," 
+                        << BothHomsPerc << "," <<  mismatchHetHomOverlap << ","  << HomLapPerc << "," 
+                        << mismatchHetHomNonOverlap << "," << HetHomNonLapPerc << "," 
+                        << mismatchHetHet << "," <<  HetHetPerc << endl;
                 
                 if (argc == 3){
                     
@@ -410,6 +408,10 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
         }
     }
     output_file.close();
+    for(vector<Sample*>::iterator it = AllSamples.begin(); it != AllSamples.end(); it++) {
+        delete (*it);
+    }
+    
     
     std::cout << endl << endl << "Processing Complete, you may now use " << argv[1] << endl << endl << "Thanks for using SnipIt.SnipitGood feel free to donate " << endl << "or request other features or programs at www.SierraAlpha.co.nz" << endl << endl;
 }
