@@ -275,7 +275,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
     SampleCount = idiv2;
     //cout << SampleCount << endl;
     i=0;
-    int k = 0;
+    int LazyCount = 1000;
     ofstream output_file ( strcat( argv[1], ".output.txt"));
     
     if ( output_file.is_open() ){
@@ -326,7 +326,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
                         }
                     }
 
-                    cout << value[0][0] << value[0][1] << value[1][0] << value[1][1] << endl; // for debugging
+                    // cout << value[0][0] << value[0][1] << value[1][0] << value[1][1] << endl; // for debugging
                     ok1 =  AllSamples[i].NextOnQueue(0, value[0][0]);   // i is the first sample name to compare, 0 is the 1st allele from that sample name
                     ok2 =  AllSamples[i].NextOnQueue(1, value[0][1]);   // i is the first sample name to compare, 1 is the 2nd allele from that sample name
                     ok3 =  AllSamples[j].NextOnQueue(0, value[1][0]);   // j is the second sample name to compare, 0 is the 1st allele from that sample name
@@ -369,7 +369,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
                 HetHetPerc = temp22.str();                
                 // temp22.str("");
 
-                cout << sample1 << " vs " << sample2 << endl; //for debugging
+                // cout << sample1 << " vs " << sample2 << endl; //for debugging
                 output_file << left << setw(19) << sample1 << " | " << setw(17) << sample2 << " | " << setw(13) << TotalSnps 
                         << " | " << setw(17) << mismatchedSnps << " | " <<  setw(13) << SnpsPerc << " | " << setw(21) << mismatchBothHoms << " | " 
                         << setw(13) << BothHomsPerc << " | " << setw(19+6) << mismatchHetHomOverlap << " | " << setw(19-2) << HomLapPerc << " | " 
@@ -378,17 +378,16 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
             
             }
             i++;
-            if (i % 1000 == 0){
-                k++;
-                cout << k <<"000 records processed so far, do not open output file until completed." << endl;
+            if (i % LazyCount == 0){
+                cout << i <<" records processed so far, do not open output file until completed." << endl;
             }
         }
     }
     output_file.close();
-    if (k < 1) {
-        cout << endl << "Less than 1000 entries!?" << endl << "Are you working hard or hardly working ;)" << endl << endl;
+    if (i < LazyCount) {
+        cout << "Less than 1000 entries!?" << endl << "Are you working hard or hardly working ;)" << endl << endl;
     }
-    cout << "Processing Complete, you may now use " << argv[1] << endl << endl << "Thanks for using SnipIt.SnipitGood feel free to donate or request other features or programs at www.SierraAlpha.co.nz" << endl;
+    cout << "Processing Complete, you may now use " << argv[1] << endl << endl << "Thanks for using SnipIt.SnipitGood feel free to donate " << endl << "or request other features or programs at www.SierraAlpha.co.nz" << endl << endl;
 }
 
 //cases
