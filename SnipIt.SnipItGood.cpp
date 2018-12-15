@@ -94,7 +94,7 @@ void Sample::MakeTitle(string s){
 void Sample::CopyName(string *copyname){
     *copyname = samplename;
     // string dog = *copyname;
-    // cout << dog << endl;
+    // std::cout << dog << endl;
 }
 
 void Sample::AddToAllele(int i, int newvalue){
@@ -214,16 +214,33 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
 	int i,j, SampleCount, ChromosoneCount;
     vector <Sample> AllSamples;
 
+    cout << "Welcome to SnipIt.SnipItGood" << endl << endl;
+    cout << "Loading File" << endl << endl;
+
+    int lowindex, highindex;
+    char delim;
+
+    cout << "Enter the lowest allele index number used (ex 0 1 2 3 with a -9 for a non sample then enter 0)" << endl;
+    cin >> lowindex;
+    cout << "Enter the highest allele index number (The index numbers must be contiguous, as per previous ex you would enter 3)" << endl;
+    cin >> highindex;
+
+    cout << "Enter the character used for delimiting the data" << endl;
+    delim = getchar();
+
+    cout << "Thank you" << endl;
+
 	ifstream input_file;
-	if(argc!=2) {
-	    cout<< "needs a filename as argument  " << endl;
+	if(argc < 2) {
+	    std::cout<< "needs a filename as argument  " << endl;
 	    exit(0);
 	}
 	input_file.open(argv[1]);
 	if(!input_file.good()){
-	    cout<< "cannot read file " << argv[1] << endl;
+	    std::cout<< "cannot read file " << argv[1] << endl;
 	    exit(0);
 	}
+    
     i=0;
     int idiv2 = 0;
     ChromosoneCount = 0;
@@ -234,29 +251,30 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
         while( getline(input_file, row)){
             line.str(row);
 
-            getline(line, Token, ' ');
+            getline(line, Token, '\t');
             if ( i % 2 == 0) {
                 class Sample s;
                 AllSamples.push_back(s);
                 AllSamples[idiv2].MakeTitle( Token);
                 // string temp1;                        // Debugging to see that names ae loading correctly
                 // AllSamples[idiv2].CopyName(&temp1);
-                // cout << temp1 << endl;
+                // std::cout << temp1 << endl;
             }
 
-            while ( getline(line, Token, ' ')) {        
+            while ( getline(line, Token, '\t')) {        
+                // cout << Token << endl; // for debugging
                 if (Token[0] == '-' || isdigit(Token[0]) ) {
                     int mynumber  = stoi(Token );
                     AllSamples[idiv2].AddToAllele((i % 2), mynumber); // to add to the correct array of allele queues
                     // int temp;
                     // AllSamples[idiv2].firstOnQueue((i%2), temp);   // Debugging code             
-                    // cout << temp << endl;
+                    // std::cout << temp << endl;
                 }
             }
             line.clear();
             i++;
             idiv2 = i / 2;
-            // cout << idiv2 << " | " << i % 2 << endl;
+            // std::cout << idiv2 << " | " << i % 2 << endl;
 
         }
     }
@@ -265,17 +283,18 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
     // ok22 = AllSamples[0].firstOnQueue(0, temp73);
     
     // while (ok22) {
-    //        cout << temp73 << " | ";
+    //        std::cout << temp73 << " | ";
     //     ok22 = AllSamples[0].NextOnQueue(0, temp73);
      
     // }
-    // cout << endl ;
+    // std::cout << endl ;
 
     input_file.close();
     SampleCount = idiv2;
-    //cout << SampleCount << endl;
+    int totalTest = (SampleCount * (SampleCount -1 )) /2;
+    //std::cout << SampleCount << endl;
     i=0;
-    int LazyCount = 1000;
+    float k = 0;
     ofstream output_file ( strcat( argv[1], ".output.txt"));
     
     if ( output_file.is_open() ){
@@ -285,7 +304,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
         int TotalSnps, mismatchedSnps, mismatchBothHoms, mismatchHetHomOverlap, mismatchHetHomNonOverlap, mismatchHetHet;
         float mismatchedSnpsPerc, mismatchBothHomsPerc, mismatchHetHomOverlapPerc, mismatchHetHomNonOverlapPerc, mismatchHetHetPerc;
 
-        cout << "File is loaded correctly, output file is being written to " << argv[1] << endl << "you will be notified every 1000 records processed" << endl << endl;
+        std::cout << "File is loaded correctly, output file is being written to " << argv[1] << endl << endl;
 
         while ( i < SampleCount-1 ){
 
@@ -326,7 +345,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
                         }
                     }
 
-                    // cout << value[0][0] << value[0][1] << value[1][0] << value[1][1] << endl; // for debugging
+                    // std::cout << value[0][0] << value[0][1] << value[1][0] << value[1][1] << endl; // for debugging
                     ok1 =  AllSamples[i].NextOnQueue(0, value[0][0]);   // i is the first sample name to compare, 0 is the 1st allele from that sample name
                     ok2 =  AllSamples[i].NextOnQueue(1, value[0][1]);   // i is the first sample name to compare, 1 is the 2nd allele from that sample name
                     ok3 =  AllSamples[j].NextOnQueue(0, value[1][0]);   // j is the second sample name to compare, 0 is the 1st allele from that sample name
@@ -369,25 +388,36 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
                 HetHetPerc = temp22.str();                
                 // temp22.str("");
 
-                // cout << sample1 << " vs " << sample2 << endl; //for debugging
+                // std::cout << sample1 << " vs " << sample2 << endl; //for debugging
                 output_file << left << setw(19) << sample1 << " | " << setw(17) << sample2 << " | " << setw(13) << TotalSnps 
                         << " | " << setw(17) << mismatchedSnps << " | " <<  setw(13) << SnpsPerc << " | " << setw(21) << mismatchBothHoms << " | " 
                         << setw(13) << BothHomsPerc << " | " << setw(19+6) << mismatchHetHomOverlap << " | " << setw(19-2) << HomLapPerc << " | " 
                         << setw(19+10) << mismatchHetHomNonOverlap << " | " << setw(19+2) << HetHomNonLapPerc << " | " 
                         << setw(19+10) << mismatchHetHet << " | " << setw(19) << HetHetPerc << endl;
-            
+                
+                if (argc == 3){
+                    
+                    k++;
+                    stringstream output, leftsample2;
+                    leftsample2 << left << setw(15) << sample2;
+                    string  opt, ls2;
+                    ls2 = leftsample2.str();
+                    output << setw(8) << setprecision(4) << k / static_cast<float>( totalTest ) * 100.0 << "% records processed so far, sample pair: " << setw(15) << sample1 << " vs " << ls2  << " do not open " << argv[1] << " until completed." << '\r';
+                    opt = output.str();
+                    leftsample2.str("");
+                    output.str();
+
+                    cout << opt << '\r';
+                    
+                }
             }
             i++;
-            if (i % LazyCount == 0){
-                cout << i <<" records processed so far, do not open output file until completed." << endl;
-            }
+            
         }
     }
     output_file.close();
-    if (i < LazyCount) {
-        cout << "Less than 1000 entries!?" << endl << "Are you working hard or hardly working ;)" << endl << endl;
-    }
-    cout << "Processing Complete, you may now use " << argv[1] << endl << endl << "Thanks for using SnipIt.SnipitGood feel free to donate " << endl << "or request other features or programs at www.SierraAlpha.co.nz" << endl << endl;
+    
+    std::cout << endl << endl << "Processing Complete, you may now use " << argv[1] << endl << endl << "Thanks for using SnipIt.SnipitGood feel free to donate " << endl << "or request other features or programs at www.SierraAlpha.co.nz" << endl << endl;
 }
 
 //cases
