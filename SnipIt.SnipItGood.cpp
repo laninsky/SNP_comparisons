@@ -126,10 +126,10 @@ void sortSnips(int value[2][2]){
 
 //cases
 
-int CheckTotal( int value[2][2]){
+int CheckTotal( int value[2][2],int low, int high){
     for (int i=0; i<2; i++){
         for(int j=0 ; j<2; j++){
-            if (value[i][j] < 0 || value[i][j] > 3) {
+            if (value[i][j] < low || value[i][j] > high) {
                 return 0;
             }
         }
@@ -222,13 +222,14 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
 
     cout << "Enter the lowest allele index number used (ex 0 1 2 3 with a -9 for a non sample then enter 0)" << endl;
     cin >> lowindex;
-    cout << "Enter the highest allele index number (The index numbers must be contiguous, as per previous ex you would enter 3)" << endl;
-    cin >> highindex;
+    highindex = lowindex + 3;
+    cout << "So the highest allele index number is " << highindex << endl;
 
-    cout << "Enter the character used for delimiting the data" << endl;
-    delim = getchar();
+    cout << "Enter the character used for delimiting the data" << endl << "(it won't show on the screen if it's a tab or space but trust me I know what you mean)" << endl;
+    cin.ignore();
+    delim = cin.get();
 
-    cout << "Thank you" << endl;
+    cout << "Thank you, if the output file is all 0's try a different delim character" << endl;
 
 	ifstream input_file;
 	if(argc < 2) {
@@ -251,7 +252,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
         while( getline(input_file, row)){
             line.str(row);
 
-            getline(line, Token, '\t');
+            getline(line, Token, delim);
             if ( i % 2 == 0) {
                 class Sample s;
                 AllSamples.push_back(s);
@@ -261,7 +262,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
                 // std::cout << temp1 << endl;
             }
 
-            while ( getline(line, Token, '\t')) {        
+            while ( getline(line, Token, delim)) {        
                 // cout << Token << endl; // for debugging
                 if (Token[0] == '-' || isdigit(Token[0]) ) {
                     int mynumber  = stoi(Token );
@@ -304,7 +305,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
         int TotalSnps, mismatchedSnps, mismatchBothHoms, mismatchHetHomOverlap, mismatchHetHomNonOverlap, mismatchHetHet;
         float mismatchedSnpsPerc, mismatchBothHomsPerc, mismatchHetHomOverlapPerc, mismatchHetHomNonOverlapPerc, mismatchHetHetPerc;
 
-        std::cout << "File is loaded correctly, output file is being written to " << argv[1] << endl << endl;
+        std::cout << "File is loaded, output file is being written to: "<< endl << argv[1] << endl << endl;
 
         while ( i < SampleCount-1 ){
 
@@ -329,7 +330,7 @@ int main( int argc, char** argv ){ //get arguments from command line, i.e., your
 
                     sortSnips(value);
                                                 
-                    if (CheckTotal(value)) {
+                    if (CheckTotal(value,lowindex,highindex)) {
                         TotalSnps++;
                         if (CheckMisMatch(value)){
                             mismatchedSnps++;
