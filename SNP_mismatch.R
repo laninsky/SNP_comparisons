@@ -4,7 +4,7 @@ SNP_mismatch <- function(working_dir,input_structure_file) {
   write.csv(t(read.table(input_structure_file,header=FALSE)),"transposed_structure.csv",row.names=FALSE,quote=FALSE)
   data <- readr::read_csv("transposed_structure.csv",skip=1)
   
-  output <- tibble(sample1 = character(), sample2 = character(), total_SNPs = integer(), mismatched_SNPs = integer(), mismatch_perc = integer(), mismatch_both_hets = integer(), both_hets_perc = integer(), mismatch_both_homs = integer(), non_both_hets_both_homs_perc = integer(), mismatch_het_hom = integer(), non_both_hets_perc_het_hom = integer())
+  output <- tibble(sample1 = character(), sample2 = character(), total_SNPs = integer(), mismatched_SNPs = integer(), mismatch_perc = integer(), mismatch_both_hets = integer(), both_hets_perc = integer(), mismatch_both_homs = integer(), both_homs_perc = integer(), mismatch_het_hom = integer(), non_both_hets_perc_het_hom = integer())
   
   # For every second column
   for (i in (seq(1,(length(names(data))-4),2))) {
@@ -29,7 +29,7 @@ SNP_mismatch <- function(working_dir,input_structure_file) {
       print(paste("Of these mismatches ",dim(hard_mismatch_both_hets)[1]," (",round(((dim(hard_mismatch_both_hets)[1])/(dim(mismatching_SNPs)[1])*100),2),"% of mismatching loci) are heterozygous for both samples",sep=""))
       print(paste("Of remaining mismatches ",dim(double_dropout)[1]," (",round(((dim(double_dropout)[1])/((dim(mismatching_SNPs)[1])-(dim(hard_mismatch_both_hets)[1]))*100),2),"% of mismatching loci) are homozygous for both samples",sep=""))
       print(paste("And... ",dim(single_dropout)[1]," (",round(((dim(single_dropout)[1])/((dim(mismatching_SNPs)[1])-(dim(hard_mismatch_both_hets)[1]))*100),2),"% of mismatching loci) are homozygous in one sample and heterozygous in the other",sep=""))
-      output <- add_row(output,sample1=col1, sample2=col3,total_SNPs=dim(rows_with_data_for_both)[1],mismatched_SNPs=dim(mismatching_SNPs)[1],mismatch_perc=round(((dim(mismatching_SNPs)[1])/(dim(rows_with_data_for_both)[1])*100),2),mismatch_both_hets=dim(hard_mismatch_both_hets)[1],both_hets_perc=round(((dim(hard_mismatch_both_hets)[1])/(dim(mismatching_SNPs)[1])*100),2),mismatch_both_homs=dim(double_dropout)[1],non_both_hets_both_homs_perc=round(((dim(double_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2),mismatch_het_hom=dim(single_dropout)[1],non_both_hets_perc_het_hom=round(((dim(single_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2))
+      output <- add_row(output,sample1=col1, sample2=col3,total_SNPs=dim(rows_with_data_for_both)[1],mismatched_SNPs=dim(mismatching_SNPs)[1],mismatch_perc=round(((dim(mismatching_SNPs)[1])/(dim(rows_with_data_for_both)[1])*100),2),mismatch_both_hets=dim(hard_mismatch_both_hets)[1],both_hets_perc=round(((dim(hard_mismatch_both_hets)[1])/(dim(mismatching_SNPs)[1])*100),2),mismatch_both_homs=dim(double_dropout)[1],both_homs_perc=round(((dim(double_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2),mismatch_het_hom=dim(single_dropout)[1],non_both_hets_perc_het_hom=round(((dim(single_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2))
     }
   }
 output %>% arrange(mismatch_perc)
