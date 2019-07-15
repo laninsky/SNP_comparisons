@@ -1,5 +1,11 @@
 // Carefully Coded by Sierra Alpha Innovations --> www.SierraAlpha.co.nz
 
+// Multithreaded Pseudo Code
+// read in structure file,
+// after second read calculation can start on a seperate thread
+// how to pass relevant lists to threads?
+// write can happen multithreaded as OS will keep this thread safe.
+
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -70,6 +76,7 @@ bool List<T>::NextItem(T &item) {
 	return true;
 }
 
+
 class Sample {
    private:
 	string samplename;
@@ -104,6 +111,42 @@ bool Sample::firstOnQueue(int i, int &value) {
 bool Sample::NextOnQueue(int i, int &value) {
 	bool ok = alleolelist[i].NextItem(value);
 	return ok;
+}
+
+class ReadInSamples {
+    public:
+     Sample *ReadInThisSample;
+     istringstream ReadInLine[2];
+     const char *delim;
+};
+
+void *ReadInSampleFunc(void *sampleReadIn) {
+	ReadInSamples *readMeIn = (ReadInSamples *)sampleReadIn;
+    string token;
+	for (int i = 0; i < 2; ++i) {
+		getline(readMeIn->ReadInLine[i], token, *readMeIn->delim);
+		if (i % 2 == 0) {
+			readMeIn->ReadInThisSample->MakeTitle(token);
+
+			// string temp1;                        // Debugging to see that names ae loading correctly
+			// AllSamples[idiv2].CopyName(&temp1);
+			// std::cout << temp1 << endl;
+		}
+
+		while (getline (readMeIn->ReadInLine[i], token, *readMeIn->delim) ) {
+			// cout << Token << endl; // for debugging
+			if (token[0] == '-' || isdigit(token[0])) {
+				int mynumber = stoi(token);
+				readMeIn->ReadInThisSample->AddToAllele(i, mynumber);  // to add to the correct array of allele queues
+
+                // int temp;
+                // AllSamples[idiv2]->firstOnQueue((i%2), temp);   // Debugging code
+                // std::cout << temp << endl;
+
+            }
+		}
+	}
+    delete readMeIn;
 }
 
 void sortSnips(int value[2][2]) {
@@ -202,10 +245,12 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	int i, j, SampleCount, ChromosoneCount;
 	vector<Sample *> AllSamples;
 
-	cout << "Welcome to SnipIt.SnipItGood" << endl
+	cout << "Welcome to SnipIt" << endl
 		 << endl;
-	cout << "Loading File" << endl
+	cout << "Loading File" << endl           // Move this to when the file actually opens
 		 << endl;
+
+// ***************************************************** Change this to command line arguments or optionally enter if not here, if delim is a tab or space then right t or s
 
 	int lowindex, highindex;
 	char delim;
@@ -223,6 +268,8 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	cout << "Thank you, if the output file is all 0's or " << endl
 		 << "the program errors try a different delim character" << endl;
 
+// ******************************************************* End of command line argument change
+
 	ifstream input_file;
 	if (argc < 2) {
 		std::cout << "needs a filename as argument  " << endl;
@@ -237,34 +284,47 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	i = 0;
 	int idiv2 = 0;
 	ChromosoneCount = 0;
-	string Token, row;
-	istringstream line;
+	string row;
+    pthread_t tempTid;
+    vector<pthread_t> tid;
+    ReadInSamples *loadme;
 	while (!input_file.eof()) {
 		while (getline(input_file, row)) {
-			line.str(row);
+            loadme = new ReadInSamples;
 
-			getline(line, Token, delim);
-			if (i % 2 == 0) {
-				AllSamples.push_back(new Sample);
-				AllSamples[idiv2]->MakeTitle(Token);
-				// string temp1;                        // Debugging to see that names ae loading correctly
-				// AllSamples[idiv2].CopyName(&temp1);
-				// std::cout << temp1 << endl;
-			}
+            AllSamples.push_back(new Sample);
+            loadme -> ReadInThisSample = AllSamples[i];
+            loadme -> delim = &delim;
 
-			while (getline(line, Token, delim)) {
-				// cout << Token << endl; // for debugging
-				if (Token[0] == '-' || isdigit(Token[0])) {
-					int mynumber = stoi(Token);
-					AllSamples[idiv2]->AddToAllele((i % 2), mynumber);  // to add to the correct array of allele queues
-					// int temp;
-					// AllSamples[idiv2]->firstOnQueue((i%2), temp);   // Debugging code
-					// std::cout << temp << endl;
-				}
-			}
-			line.clear();
+			loadme -> ReadInLine[0].str(row);
+            getline(input_file, row);
+            loadme -> ReadInLine[1].str(row);
+
+            pthread_create( &tempTid, NULL, ReadInSampleFunc, &loadme );
+            tid.push_back(tempTid);
+
+			// getline(line1, Token, delim);
+			// if (i % 2 == 0) {
+			// 	AllSamples.push_back(new Sample);
+			// 	AllSamples[idiv2]->MakeTitle(Token);
+			// 	// string temp1;                        // Debugging to see that names ae loading correctly
+			// 	// AllSamples[idiv2].CopyName(&temp1);
+			// 	// std::cout << temp1 << endl;
+			// }
+
+			// while (getline(line1, Token, delim)) {
+			// 	// cout << Token << endl; // for debugging
+			// 	if (Token[0] == '-' || isdigit(Token[0])) {
+			// 		int mynumber = stoi(Token);
+			// 		AllSamples[idiv2]->AddToAllele((i % 2), mynumber);  // to add to the correct array of allele queues
+			// 		// int temp;
+			// 		// AllSamples[idiv2]->firstOnQueue((i%2), temp);   // Debugging code
+			// 		// std::cout << temp << endl;
+			// 	}
+			// }
+
 			i++;
-			idiv2 = i / 2;
+			// idiv2 = i / 2;
 			// std::cout << idiv2 << " | " << i % 2 << endl;
 		}
 	}
@@ -280,12 +340,22 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	// std::cout << endl ;
 
 	input_file.close();
-	SampleCount = idiv2;
+
+	SampleCount = i;
 	int totalTest = (SampleCount * (SampleCount - 1)) / 2;
 	//std::cout << SampleCount << endl;
 	i = 0;
 	float k = 0;
-	ofstream output_file(strcat(argv[1], ".output.csv"));
+    // ----------      join here
+
+
+
+    // Write compare and write string stream here
+
+
+
+    // write stirng stream to file here
+	ofstream output_file(strcat(argv[1], "Snipped.csv"));
 
 	if (output_file.is_open()) {
 		output_file << "sample1,sample2,total SNPs,mismatched SNPs,mismatch %,Hom Hom (ex: 00 11),Hom Homs %,";
@@ -300,6 +370,9 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 
 		while (i < SampleCount - 1) {
 			for (j = i + 1; j < SampleCount; j++) {
+
+                // Functionise this for THreading
+
 				TotalSnps = 0;
 				mismatchedSnps = 0;
 				mismatchBothHoms = 0;
