@@ -14,6 +14,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <unistd.h>
+#include <pthread.h>
 
 using namespace std;
 
@@ -113,18 +115,18 @@ bool Sample::NextOnQueue(int i, int &value) {
 	return ok;
 }
 
-class ReadInSamples {
-    public:
-     Sample *ReadInThisSample;
-     istringstream ReadInLine[2];
-     const char *delim;
+struct ReadInSamples {
+    Sample *ReadInThisSample;
+    istringstream ReadInLine[2];
+    char delim;
 };
 
 void *ReadInSampleFunc(void *sampleReadIn) {
 	ReadInSamples *readMeIn = (ReadInSamples *)sampleReadIn;
     string token;
 	for (int i = 0; i < 2; ++i) {
-		getline(readMeIn->ReadInLine[i], token, *readMeIn->delim);
+            cout << "Make it here?" << endl;
+		getline( readMeIn -> ReadInLine[i], token, readMeIn -> delim);
 		if (i % 2 == 0) {
 			readMeIn->ReadInThisSample->MakeTitle(token);
 
@@ -132,21 +134,22 @@ void *ReadInSampleFunc(void *sampleReadIn) {
 			// AllSamples[idiv2].CopyName(&temp1);
 			// std::cout << temp1 << endl;
 		}
-
-		while (getline (readMeIn->ReadInLine[i], token, *readMeIn->delim) ) {
-			// cout << Token << endl; // for debugging
+		while (getline (readMeIn->ReadInLine[i], token, readMeIn->delim) ) {
+			// cout << token << endl; // for debugging
 			if (token[0] == '-' || isdigit(token[0])) {
 				int mynumber = stoi(token);
 				readMeIn->ReadInThisSample->AddToAllele(i, mynumber);  // to add to the correct array of allele queues
 
-                // int temp;
-                // AllSamples[idiv2]->firstOnQueue((i%2), temp);   // Debugging code
-                // std::cout << temp << endl;
+        //         // int temp;
+        //         // AllSamples[idiv2]->firstOnQueue((i%2), temp);   // Debugging code
+        //         // std::cout << temp << endl;
 
             }
 		}
 	}
     delete readMeIn;
+    cout << "or here" << endl;
+    return NULL;
 }
 
 void sortSnips(int value[2][2]) {
@@ -287,21 +290,26 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	string row;
     pthread_t tempTid;
     vector<pthread_t> tid;
-    ReadInSamples *loadme;
+    vector<ReadInSamples *> loadme;
 	while (!input_file.eof()) {
 		while (getline(input_file, row)) {
-            loadme = new ReadInSamples;
+
+            loadme.push_back(new ReadInSamples);
 
             AllSamples.push_back(new Sample);
-            loadme -> ReadInThisSample = AllSamples[i];
-            loadme -> delim = &delim;
+            loadme[i] -> ReadInThisSample = AllSamples[i];
+            loadme[i] -> delim = delim;
 
-			loadme -> ReadInLine[0].str(row);
+			loadme[i] -> ReadInLine[0].str(row);
             getline(input_file, row);
-            loadme -> ReadInLine[1].str(row);
+            loadme[i] -> ReadInLine[1].str(row);
 
-            pthread_create( &tempTid, NULL, ReadInSampleFunc, &loadme );
+            pthread_create( &tempTid, NULL, ReadInSampleFunc, loadme[i] );
             tid.push_back(tempTid);
+
+            // sleep(1000);
+            // cout << "press enter for main to continue" << endl;
+            // getchar();
 
 			// getline(line1, Token, delim);
 			// if (i % 2 == 0) {
