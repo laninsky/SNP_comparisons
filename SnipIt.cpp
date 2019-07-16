@@ -16,8 +16,11 @@
 #include <vector>
 #include <unistd.h>
 #include <pthread.h>
+#include "sem.h"
 
 using namespace std;
+
+semaphore threadSetup;
 
 template <class T>
 class List {
@@ -26,16 +29,18 @@ class List {
 		T data;
 		Node *next;
 	};
-	Node *front; 
-    vector<Node *> current;
+	Node *front, *current; 
+    vector<Node *> threadCurrent;
 
    public:
 	List();
 	~List();
 	void AddtoFront(T newthing);
-    int newCurrent();
-	bool FirstItem(int thread, T &item);
+    int newCurrentThread();
+    bool FirstItem(int thread, T &item);
 	bool NextItem(int thread, T &item);
+	bool FirstItem(T &item);
+	bool NextItem(T &item);
     void threadReset();
 };
 
@@ -62,7 +67,33 @@ void List<T>::AddtoFront(T newthing) {
 }
 
 template <class T>
+int List<T>::newCurrentThread() {
+    threadCurrent.push_back(front);
+    return (threadCurrent.size()-1);
+}
+
+template <class T>
 bool List<T>::FirstItem(int thread, T &item) {
+	if (front == NULL) {
+		return false;
+	}
+	item = front->data;
+	threadCurrent[thread] = front;
+	return true;
+}
+
+template <class T>
+bool List<T>::NextItem(int thread, T &item) {
+	threadCurrent[thread] = threadCurrent[thread]->next;
+	if (threadCurrent[thread] == NULL) {
+		return false;
+	}
+	item = threadCurrent[thread]->data;
+	return true;
+}
+
+template <class T>
+bool List<T>::FirstItem(T &item) {
 	if (front == NULL) {
 		return false;
 	}
@@ -81,6 +112,10 @@ bool List<T>::NextItem(T &item) {
 	return true;
 }
 
+template <class T>
+void List<T>::threadReset(){
+    threadCurrent.resize(0);
+}
 
 class Sample {
    private:
@@ -95,6 +130,11 @@ class Sample {
 	void AddToAllele(int i, int newvalue);
 	bool firstOnQueue(int i, int &value);
 	bool NextOnQueue(int i, int &value);
+
+    int newThread(int i);
+	bool firstOnQueue(int thread, int i, int &value);
+	bool NextOnQueue(int thread, int i, int &value);
+    void resetThread(int i);
 };
 
 void Sample::MakeTitle(string s) {
@@ -113,9 +153,28 @@ bool Sample::firstOnQueue(int i, int &value) {
 	bool ok = alleolelist[i].FirstItem(value);
 	return ok;
 }
+
 bool Sample::NextOnQueue(int i, int &value) {
 	bool ok = alleolelist[i].NextItem(value);
 	return ok;
+}
+
+int Sample::newThread(int i) {
+    return alleolelist[i].newCurrentThread();
+}
+
+bool Sample::firstOnQueue(int thread, int i, int &value) {
+	bool ok = alleolelist[i].FirstItem(thread, value);
+	return ok;
+}
+
+bool Sample::NextOnQueue(int thread, int i, int &value) {
+	bool ok = alleolelist[i].NextItem(thread, value);
+	return ok;
+}
+
+void Sample::resetThread(int i){
+    alleolelist[i].threadReset();
 }
 
 struct ReadInSamples {
@@ -264,12 +323,23 @@ void * snipAndString(void * cutMeUp){
 
 	int value[2][2];  // Load an array with the sample values for comparison
 	bool ok1, ok2, ok3, ok4;
-	ok1 = sampleSnip -> workOnMe[0] -> firstOnQueue(0, value[0][0]);  // i is the first sample name to compare, 0 is the 1st allele from that sample name
-	ok2 = sampleSnip -> workOnMe[0] -> firstOnQueue(1, value[0][1]);  // i is the first sample name to compare, 1 is the 2nd allele from that sample name
-	ok3 = sampleSnip -> workOnMe[1] -> firstOnQueue(0, value[1][0]);  // j is the second sample name to compare, 0 is the 1st allele from that sample name
-	ok4 = sampleSnip -> workOnMe[1] -> firstOnQueue(1, value[1][1]);  // j is the second sample name to compare, 1 is the 2nd allele from that sample name
+    int thread[4];
 
-	// while (ok1 && ok2 && ok3 && ok4) {
+    semaphore_wait(&threadSetup);
+    thread[0] = sampleSnip -> workOnMe[0] -> newThread(0);
+    thread[1] = sampleSnip -> workOnMe[0] -> newThread(1);
+    thread[2] = sampleSnip -> workOnMe[1] -> newThread(0);
+    thread[3] = sampleSnip -> workOnMe[1] -> newThread(1);
+    // cout << thread[0] << thread[1] << thread[2] << thread[3] << endl;
+
+
+
+	ok1 = sampleSnip -> workOnMe[0] -> firstOnQueue(thread[0], 0, value[0][0]);  // i is the first sample name to compare, 0 is the 1st allele from that sample name
+	ok2 = sampleSnip -> workOnMe[0] -> firstOnQueue(thread[1], 1, value[0][1]);  // i is the first sample name to compare, 1 is the 2nd allele from that sample name
+	ok3 = sampleSnip -> workOnMe[1] -> firstOnQueue(thread[2], 0, value[1][0]);  // j is the second sample name to compare, 0 is the 1st allele from that sample name
+	ok4 = sampleSnip -> workOnMe[1] -> firstOnQueue(thread[3], 1, value[1][1]);  // j is the second sample name to compare, 1 is the 2nd allele from that sample name
+
+	while (ok1 && ok2 && ok3 && ok4) {
 		sortSnips(value);
 
 		if (CheckTotal(value, *sampleSnip -> lowindex, *sampleSnip -> highindex)) {
@@ -289,12 +359,12 @@ void * snipAndString(void * cutMeUp){
 		}
 
 		// std::cout << value[0][0] << value[0][1] << value[1][0] << value[1][1] << endl; // for debugging
-		// ok1 = sampleSnip -> workOnMe[0] -> NextOnQueue(0, value[0][0]);  // i is the first sample name to compare, 0 is the 1st allele from that sample name
-		// ok2 = sampleSnip -> workOnMe[0] -> NextOnQueue(1, value[0][1]);  // i is the first sample name to compare, 1 is the 2nd allele from that sample name
-		// ok3 = sampleSnip -> workOnMe[1] -> NextOnQueue(0, value[1][0]);  // j is the second sample name to compare, 0 is the 1st allele from that sample name
-		// ok4 = sampleSnip -> workOnMe[1] -> NextOnQueue(1, value[1][1]);
-	// }
-
+		ok1 = sampleSnip -> workOnMe[0] -> NextOnQueue(thread[0], 0, value[0][0]);  // i is the first sample name to compare, 0 is the 1st allele from that sample name
+		ok2 = sampleSnip -> workOnMe[0] -> NextOnQueue(thread[1], 1, value[0][1]);  // i is the first sample name to compare, 1 is the 2nd allele from that sample name
+		ok3 = sampleSnip -> workOnMe[1] -> NextOnQueue(thread[2], 0, value[1][0]);  // j is the second sample name to compare, 0 is the 1st allele from that sample name
+		ok4 = sampleSnip -> workOnMe[1] -> NextOnQueue(thread[3], 1, value[1][1]);
+	}
+    semaphore_signal(&threadSetup);
 	mismatchedSnpsPerc = static_cast<float>(mismatchedSnps) / static_cast<float>(TotalSnps) * 100.0;
 	mismatchBothHomsPerc = static_cast<float>(mismatchBothHoms) / static_cast<float>(TotalSnps) * 100.0;
 	mismatchHetHomOverlapPerc = static_cast<float>(mismatchHetHomOverlap) / static_cast<float>(TotalSnps) * 100.0;
@@ -342,12 +412,12 @@ void * snipAndString(void * cutMeUp){
     return NULL;
 }
 
-
 // -------------------------- v Main Starts Here v --------------------- //
 
 int main(int argc, char **argv) {  //get arguments from command line, i.e., yourexec filename
 	int i, j, SampleCount, ChromosoneCount;
 	vector<Sample *> AllSamples;
+    semaphore_create(&threadSetup, 1);
 
 	cout << "Welcome to SnipIt" << endl
 		 << endl;
@@ -386,7 +456,6 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	}
 
 	i = 0;
-	int idiv2 = 0;
 	ChromosoneCount = 0;
 	string row;
     pthread_t tempTid;
@@ -422,7 +491,7 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
     for( i=0; i < tid.size(); ++i){
         pthread_join( tid[i], NULL);                // Wait for any loading threads still waiting to complete before continuing
     }
-
+    cout << "file read in" << endl;
     // Write compare and write string stream here
 
 	tid.resize(0);
@@ -461,20 +530,20 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
     // Join here before writing to file
 
         for( i=0; i < tid.size(); ++i){
-            // pthread_join( tid[i], NULL);                // Wait for any loading threads still waiting to complete before continuing
+            pthread_join( tid[i], NULL);                // Wait for any loading threads still waiting to complete before continuing
             output_file << twoSamples[i] -> output;
         }
 
 	output_file.close();
 
-        for ( i=0; i < k; ++i){
-            delete twoSamples[i];
-        }
+        // for ( i=0; i < k; ++i){
+        //     delete twoSamples[i];
+        // }
 
 	}
-	for (vector<Sample *>::iterator it = AllSamples.begin(); it != AllSamples.end(); it++) {
-		delete (*it);
-	}
+	// for (vector<Sample *>::iterator it = AllSamples.begin(); it != AllSamples.end(); it++) {
+	// 	delete (*it);
+	// }
 
 	std::cout << endl
 			  << endl
