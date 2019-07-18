@@ -392,6 +392,19 @@ void * snipAndString(void * cutMeUp){
     return NULL;
 }
 
+void helpAndExit(){
+    cout <<
+    "usage:" << endl <<
+    "./SnipIt <input_filename> <lowest_allele> <delim_character>" << endl << endl <<
+    "<input_filename>   - The name of the structure file to be read in and snipped." << endl <<
+    "<lowest_allele>    - Specify the lowest number used to represent an allele," << endl << 
+    "\t\t\tthis program assumes they are represented by 4 consecutive numbers, " << endl << 
+    "\t\t\tany number outside this are considered a non sample." << endl <<
+    "<delim_characters> - The character used to delimit samples in the stru file," << endl << 
+    "\t\t\tuse \\\\t or \\\\s for tab and space respectivly." << endl << endl;
+    exit(0);
+}
+
 // -------------------------- v Main Starts Here v --------------------- //
 
 int main(int argc, char **argv) {  //get arguments from command line, i.e., yourexec filename
@@ -399,36 +412,47 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	vector<Sample *> AllSamples;
     // semaphore_create(&threadSetup, 1);
 
-	cout << "Welcome to SnipIt" << endl
-		 << endl;
-	cout << "Loading File" << endl           // Move this to when the file actually opens
+	if (argc != 4) {
+		helpAndExit();
+	}
+
+	cout << endl << "Welcome to SnipIt, type 'ctrl + c' to exit" << endl
 		 << endl;
 
 // ***************************************************** Change this to command line arguments or optionally enter if not here, if delim is a tab or space then right t or s
 
 	int lowindex, highindex;
-	char delim;
+	char delim = '\0';
 
-	cout << "Enter the lowest allele index number used (ex 0 1 2 3 with a -9 for missing data then enter 0)" << endl;
-	cin >> lowindex;
+    istringstream(argv[2]) >> lowindex;
 	highindex = lowindex + 3;
-	cout << "So the highest allele index number is " << highindex << endl;
+	cout << "The allele index number range is " << lowindex << " to " << highindex << endl;
 
-	cout << "Enter the character used for delimiting the data" << endl
-		 << "(it won't show on the screen if it's a tab or space but trust me I know what you mean)" << endl;
-	cin.ignore();
-	delim = cin.get();
+    if(strlen(argv[3]) > 1){
+	    if (argv[3][0] == '\\') {
+            if(argv[3][1] == 's'){
+                delim = ' ';
+            }
+            if(argv[3][1] == 't'){
+                delim = '\t';
+            }
+        }
+    } else {
+        istringstream(argv[4]) >> delim;
+    }
 
-	cout << "Thank you, if the output file is all 0's or " << endl
-		 << "the program errors try a different delim character" << endl;
+    cout << "The delimiter is \"" << delim << "\"" << endl;
+
+
+	cout << endl << "If the output file is all 0's or the program errors try a different delim character" << endl <<
+        "Remember to use \\\\s or \\\\t in the command line arguments for 'space' or 'tab' keys" << endl << endl;
 
 // ******************************************************* End of command line argument change
 
+	cout << "Loading File" << endl;           // Move this to when the file actually opens
+
+
 	ifstream input_file;
-	if (argc < 2) {
-		std::cout << "needs a filename as argument  " << endl;
-		exit(0);
-	}
 	input_file.open(argv[1]);
 	if (!input_file.good()) {
 		std::cout << "cannot read file " << argv[1] << endl;
@@ -469,7 +493,8 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
     for( i=0; i < tid.size(); ++i){
         pthread_join( tid[i], NULL);                // Wait for any loading threads still waiting to complete before continuing
     }
-    cout << "file read in" << endl;
+    cout << "File loaded" << endl <<
+    "Starting comparison" << endl;
     // Write compare and write string stream here
 
     // for (i=0; i< AllSamples.size()-1; ++i){
@@ -515,9 +540,8 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 		output_file << "sample1,sample2,total SNPs,mismatched SNPs,mismatch %,Hom Hom (ex: 00 11),Hom Homs %,";
 		output_file << "Het Hom Lap (ex: 00 01),Het Hom Lap %,Het Hom non Lap (ex 00 12),Het Hom non Lap %,Het Het (ex: 01 12 or 01 23),Het Het %\n";
 
-		std::cout << "File is loaded, output file is being written to: " << endl
-				  << argv[1] << endl
-				  << endl;
+		std::cout << "Comparison finished, writing to file:" << endl
+				  << argv[1] << endl;
     // Join here before writing to file
 
         for( i=0; i < tid.size(); ++i){
@@ -537,7 +561,6 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	// }
 
 	std::cout << endl
-			  << endl
 			  << "Processing Complete, you may now use " << argv[1] << endl
 			  << endl
 			  << "Thanks for using SnipIt feel free to donate " << endl
