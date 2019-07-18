@@ -16,61 +16,55 @@
 #include <vector>
 #include <unistd.h>
 #include <pthread.h>
-// #include "sem.h"
+#include "sem.h"
 
 using namespace std;
 
 // semaphore threadSetup;
 
-template <class T>
 struct Node {
-	T data;
+	int data;
 	Node *next;
 };
 
-template <class T>
 class List {
     private:
-	 Node<T> *front, *current;
+	 Node *front, *current;
 
     public:
 	 List();
 	 ~List();
-	 void AddtoFront(T newthing);
+	 void AddtoFront(int newthing);
 
-	 bool FirstItem(T &item);
-	 bool NextItem(T &item);
+	 bool FirstItem(int &item);
+	 bool NextItem(int &item);
 
-     bool FirstItem( Node<T> *thisPtr, T &item );
-     bool thisItem( Node<T> *thisPtr, T &item );
-     bool nextPointer( Node<T> *thisPtr, Node<T> *next );
+     bool FirstItem( Node **returnThis, int &item );
+     bool thisItem( Node *thisPtr, int &item );
+     bool nextPointer( Node *thisPtr, Node **next );
 
 };
 
-template <class T>
-List<T>::List() {
+List::List() {
 	front = NULL;
 	current = NULL;
 }
 
-template <class T>
-List<T>::~List() {
+List::~List() {
 	if (front != NULL) {
 		delete front;
 	}
 }
 
-template <class T>
-void List<T>::AddtoFront(T newthing) {
-	Node<T> *temp;
-	temp = new Node<T>;
+void List::AddtoFront(int newthing) {
+	Node *temp;
+	temp = new Node;
 	temp->data = newthing;
 	temp->next = front;
 	front = temp;
 }
 
-template <class T>
-bool List<T>::FirstItem(T &item) {
+bool List::FirstItem(int &item) {
 	if (front == NULL) {
 		return false;
 	}
@@ -79,8 +73,7 @@ bool List<T>::FirstItem(T &item) {
 	return true;
 }
 
-template <class T>
-bool List<T>::NextItem(T &item) {
+bool List::NextItem(int &item) {
 	current = current->next;
 	if (current == NULL) {
 		return false;
@@ -89,90 +82,87 @@ bool List<T>::NextItem(T &item) {
 	return true;
 }
 
-template <class T>
-bool List<T>::thisItem(Node<T> * thisPtr, T &item){
+bool List::FirstItem( Node **returnThis, int &item ){
+    if (front == NULL) return false;
+    *returnThis = front;
+    item = front -> data;
+    return true;
+}
+
+bool List::thisItem(Node *thisPtr, int &item){
     if (thisPtr == NULL) return false;
     item = thisPtr -> data;
     return true;
 }
 
-template <class T>
-bool List<T>::nextPointer(Node<T> * thisPtr, Node<T> *next){
+bool List::nextPointer(Node *thisPtr, Node **next){
     if(thisPtr == NULL) return false;
-    next = thisPtr -> next;
+    *next = thisPtr -> next;
     return true;
 }
 
-template <class T>
 class Sample {
    private:
 	string samplename;
-	class List<T> alleolelist[2];
+	class List alleolelist[2];
 
    public:
 	Sample(){};
 	~Sample(){};
 	void MakeTitle(string s);
 	void CopyName(string *copyname);
-	void AddToAllele(int i, T newvalue);
-	bool firstOnQueue(int i, T &value);
-	bool NextOnQueue(int i, T &value);
+	void AddToAllele(int i, int newvalue);
+	bool firstOnQueue(int i, int &value);
+	bool NextOnQueue(int i, int &value);
 
-    bool firstOnQueue(int i, Node<T> * returnThis, T &value);
-	bool NextOnQueue(int i, Node<T> * afterThis, Node<T> * returnThis, T &value);
+    bool firstOnQueue(int i, Node **returnThis, int &value);
+	bool NextOnQueue(int i, Node *afterThis, Node **returnThis, int &value);
 
 };
 
-template <class T>
-void Sample<T>::MakeTitle(string s) {
+void Sample::MakeTitle(string s) {
 	samplename = s;
 }
 
-template <class T>
-void Sample<T>::CopyName(string *copyname) {
+void Sample::CopyName(string *copyname) {
 	*copyname = samplename;
 }
 
-template <class T>
-void Sample<T>::AddToAllele(int i, T newvalue) {
+void Sample::AddToAllele(int i, int newvalue) {
 	alleolelist[i].AddtoFront(newvalue);
 }
 
-template <class T>
-bool Sample<T>::firstOnQueue(int i, T &value) {
+bool Sample::firstOnQueue(int i, int &value) {
 	bool ok = alleolelist[i].FirstItem(value);
 	return ok;
 }
 
-template <class T>
-bool Sample<T>::NextOnQueue(int i, T &value) {
+bool Sample::NextOnQueue(int i, int &value) {
 	bool ok = alleolelist[i].NextItem(value);
 	return ok;
 }
 
-template <class T>
-bool Sample<T>::firstOnQueue(int i, Node<T> *returnThis, T &value){
+bool Sample::firstOnQueue(int i, Node **returnThis, int &value){
     return alleolelist[i].FirstItem(returnThis, value);
 }
 
-template <class T>
-bool Sample<T>::NextOnQueue(int i, Node<T> *afterThis, Node<T> *returnThis, T &value){
+bool Sample::NextOnQueue(int i, Node *afterThis, Node **returnThis, int &value){
     bool ok = alleolelist[i].nextPointer(afterThis, returnThis);
     if (ok) {
-        ok = alleolelist[i].thisItem(returnThis, value);
+        ok = alleolelist[i].thisItem(*returnThis, value);
     }
     return ok;
 }
 
 struct ReadInSamples {
-    Sample<int> *ReadInThisSample;
+    Sample *ReadInThisSample;
     istringstream ReadInLine[2];
     char *delim;
 };
 
 struct snipItStruct{
     int *lowindex, *highindex;
-    Sample<int> *workOnMe[2];
+    Sample *workOnMe[2];
     string output;
 };
 
@@ -194,9 +184,9 @@ void *ReadInSampleFunc(void *sampleReadIn) {
 				int mynumber = stoi(token);                                     // string to integer it
 				readMeIn->ReadInThisSample->AddToAllele(i, mynumber);           // to add to the correct array of allele queues
 
-        //         // int temp;
-        //         // AllSamples[idiv2]->firstOnQueue((i%2), temp);   // Debugging code
-        //         // std::cout << temp << endl;
+                // int temp;
+                // readMeIn->ReadInThisSample->firstOnQueue(i, temp);   // Debugging code
+                // std::cout << temp << endl;
 
             }
 		}
@@ -312,18 +302,18 @@ void * snipAndString(void * cutMeUp){
 	bool ok1, ok2, ok3, ok4;
 
 
-    Node<int> *current[4], *next[4];
+    Node *current[4], *next[4];
 
     // cout << thread[0] << thread[1] << thread[2] << thread[3] << endl;
 
-	ok1 = sampleSnip -> workOnMe[0] -> firstOnQueue(0, next[0], value[0][0]);  // i is the first sample name to compare, 0 is the 1st allele from that sample name
-	ok2 = sampleSnip -> workOnMe[0] -> firstOnQueue(1, next[1], value[0][1]);  // i is the first sample name to compare, 1 is the 2nd allele from that sample name
-	ok3 = sampleSnip -> workOnMe[1] -> firstOnQueue(0, next[2], value[1][0]);  // j is the second sample name to compare, 0 is the 1st allele from that sample name
-	ok4 = sampleSnip -> workOnMe[1] -> firstOnQueue(1, next[3], value[1][1]);  // j is the second sample name to compare, 1 is the 2nd allele from that sample name
+	ok1 = sampleSnip -> workOnMe[0] -> firstOnQueue(0, &next[0], value[0][0]);  // i is the first sample name to compare, 0 is the 1st allele from that sample name
+	ok2 = sampleSnip -> workOnMe[0] -> firstOnQueue(1, &next[1], value[0][1]);  // i is the first sample name to compare, 1 is the 2nd allele from that sample name
+	ok3 = sampleSnip -> workOnMe[1] -> firstOnQueue(0, &next[2], value[1][0]);  // j is the second sample name to compare, 0 is the 1st allele from that sample name
+	ok4 = sampleSnip -> workOnMe[1] -> firstOnQueue(1, &next[3], value[1][1]);  // j is the second sample name to compare, 1 is the 2nd allele from that sample name
 
 	while (ok1 && ok2 && ok3 && ok4) {
 		sortSnips(value);
-
+ 
 		if (CheckTotal(value, *sampleSnip -> lowindex, *sampleSnip -> highindex)) {
 			TotalSnps++;
 			if (CheckMisMatch(value)) {
@@ -345,11 +335,13 @@ void * snipAndString(void * cutMeUp){
         }
 
 		// std::cout << value[0][0] << value[0][1] << value[1][0] << value[1][1] << endl; // for debugging
-		ok1 = sampleSnip -> workOnMe[0] -> NextOnQueue(0, current[0], next[0], value[0][0]);  // i is the first sample name to compare, 0 is the 1st allele from that sample name
-		ok2 = sampleSnip -> workOnMe[0] -> NextOnQueue(1, current[1], next[1], value[0][1]);  // i is the first sample name to compare, 1 is the 2nd allele from that sample name
-		ok3 = sampleSnip -> workOnMe[1] -> NextOnQueue(0, current[2], next[2],  value[1][0]);  // j is the second sample name to compare, 0 is the 1st allele from that sample name
-		ok4 = sampleSnip -> workOnMe[1] -> NextOnQueue(1, current[3], next[3],  value[1][1]);
+		ok1 = sampleSnip -> workOnMe[0] -> NextOnQueue(0, current[0], &next[0], value[0][0]);  // i is the first sample name to compare, 0 is the 1st allele from that sample name
+		ok2 = sampleSnip -> workOnMe[0] -> NextOnQueue(1, current[1], &next[1], value[0][1]);  // i is the first sample name to compare, 1 is the 2nd allele from that sample name
+		ok3 = sampleSnip -> workOnMe[1] -> NextOnQueue(0, current[2], &next[2],  value[1][0]);  // j is the second sample name to compare, 0 is the 1st allele from that sample name
+		ok4 = sampleSnip -> workOnMe[1] -> NextOnQueue(1, current[3], &next[3],  value[1][1]);
 	}
+
+    // cout << mismatchedSnps << " " << mismatchBothHoms << " " << mismatchHetHomNonOverlap << " " << mismatchHetHomNonOverlap << " " << mismatchHetHet << endl;
 
 	mismatchedSnpsPerc = static_cast<float>(mismatchedSnps) / static_cast<float>(TotalSnps) * 100.0;
 	mismatchBothHomsPerc = static_cast<float>(mismatchBothHoms) / static_cast<float>(TotalSnps) * 100.0;
@@ -394,6 +386,8 @@ void * snipAndString(void * cutMeUp){
 				<< mismatchHetHet << "," << HetHetPerc << endl;
 
     sampleSnip -> output = temp22.str();
+    // cout << sampleSnip -> output;
+    // getchar();
     // sampleSnip -> output = "test";
     return NULL;
 }
@@ -402,7 +396,7 @@ void * snipAndString(void * cutMeUp){
 
 int main(int argc, char **argv) {  //get arguments from command line, i.e., yourexec filename
 	int i, j, SampleCount, ChromosoneCount;
-	vector<Sample<int> *> AllSamples;
+	vector<Sample *> AllSamples;
     // semaphore_create(&threadSetup, 1);
 
 	cout << "Welcome to SnipIt" << endl
@@ -452,7 +446,7 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 
             loadme.push_back(new ReadInSamples);
 
-            AllSamples.push_back(new Sample<int>);
+            AllSamples.push_back(new Sample);
             loadme[i] -> ReadInThisSample = AllSamples[i];
             loadme[i] -> delim = &delim;
 
@@ -479,6 +473,20 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
     }
     cout << "file read in" << endl;
     // Write compare and write string stream here
+
+    // for (i=0; i< AllSamples.size()-1; ++i){
+    //     Node *next = nullptr, *curent = nullptr;
+    //     bool ok;
+    //     int temp;
+    //     ok = AllSamples[i] -> firstOnQueue(0, &next, temp);  // i is the first sample name to compare, 0 is the 1st allele from that sample name
+    //     while(ok){
+    //         cout << temp << endl;
+    //         curent = next;
+    //         ok = AllSamples[i] -> NextOnQueue(0, curent, &next, temp);
+    //     }
+    //     cout << "presse enter for next allele 1 of next sample";
+    //     getchar();
+    // }
 
 	tid.resize(0);
     vector<snipItStruct *> twoSamples;
