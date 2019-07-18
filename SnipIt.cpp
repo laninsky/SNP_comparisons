@@ -461,7 +461,6 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	}
 
 	input_file.close();
-
 	SampleCount = i;
 	// int totalTest = (SampleCount * (SampleCount - 1)) / 2;
 
@@ -491,7 +490,7 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
     vector<snipItStruct *> twoSamples;
     i = 0;
 	int k = 0;
-    while (i < SampleCount - 1) {
+    while (i < SampleCount) {
 		for (j = i + 1; j < SampleCount; ++j) {
 
             twoSamples.push_back(new snipItStruct);
@@ -505,7 +504,6 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
             ++k;
             // pthread_join(tempTid, NULL);
         }
-        // cout << "Do I make it here" << endl;
         ++i;
     }
 
