@@ -109,7 +109,7 @@ class Sample {
    public:
 	Sample(){};
 	~Sample(){};
-	void MakeTitle(string s);
+	void MakeTitle(const string &s);
 	void CopyName(string *copyname);
 	void AddToAllele(int i, int newvalue);
 	bool firstOnQueue(int i, int &value);
@@ -120,7 +120,7 @@ class Sample {
 
 };
 
-void Sample::MakeTitle(string s) {
+void Sample::MakeTitle(const string &s) {
 	samplename = s;
 }
 
@@ -395,7 +395,7 @@ void * snipAndString(void * cutMeUp){
 // -------------------------- v Main Starts Here v --------------------- //
 
 int main(int argc, char **argv) {  //get arguments from command line, i.e., yourexec filename
-	int i, j, SampleCount, ChromosoneCount;
+	int i, j, SampleCount;
 	vector<Sample *> AllSamples;
     // semaphore_create(&threadSetup, 1);
 
@@ -436,7 +436,6 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 	}
 
 	i = 0;
-	ChromosoneCount = 0;
 	string row;
     pthread_t tempTid;
     vector<pthread_t> tid;
