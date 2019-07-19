@@ -51,8 +51,10 @@ List::List() {
 }
 
 List::~List() {
-	if (front != NULL) {
-		delete front;
+	while (front != NULL) {
+        Node *temp = front;
+        front = front -> next;
+		delete temp;
 	}
 }
 
@@ -540,32 +542,35 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 		output_file << "sample1,sample2,total SNPs,mismatched SNPs,mismatch %,Hom Hom (ex: 00 11),Hom Homs %,";
 		output_file << "Het Hom Lap (ex: 00 01),Het Hom Lap %,Het Hom non Lap (ex 00 12),Het Hom non Lap %,Het Het (ex: 01 12 or 01 23),Het Het %\n";
 
-		std::cout << "Comparison finished, writing to file:" << endl
-				  << argv[1] << endl;
-    // Join here before writing to file
+		std::cout <<
+                "Comparison finished, writing to file:" << endl <<
+				argv[1] << endl;
 
         for( i=0; i < tid.size(); ++i){
             pthread_join( tid[i], NULL);                // Wait for any loading threads still waiting to complete before continuing
             output_file << twoSamples[i] -> output;
         }
 
-	output_file.close();
+	    output_file.close();
 
-        // for ( i=0; i < k; ++i){
-        //     delete twoSamples[i];
-        // }
+        std::cout << endl <<
+                "Processing Complete, you may now use " << argv[1] << endl <<
+                endl <<
+                "Thanks for using SnipIt feel free to donate " << endl <<
+                "or request other features or programs at www.SierraAlpha.co.nz" << endl <<
+                endl;
 
+	}   else {
+        cout << "Unable to open output file for writing too, program will now exit" << endl;
+    }
+
+
+    for ( i=0; i < k; ++i){
+        delete twoSamples[i];
+    }
+	for (vector<Sample *>::iterator it = AllSamples.begin(); it != AllSamples.end(); it++) {
+		delete (*it);
 	}
-	// for (vector<Sample *>::iterator it = AllSamples.begin(); it != AllSamples.end(); it++) {
-	// 	delete (*it);
-	// }
-
-	std::cout << endl
-			  << "Processing Complete, you may now use " << argv[1] << endl
-			  << endl
-			  << "Thanks for using SnipIt feel free to donate " << endl
-			  << "or request other features or programs at www.SierraAlpha.co.nz" << endl
-			  << endl;
 }
 
 //cases
