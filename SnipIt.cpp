@@ -16,7 +16,6 @@
 #include <vector>
 #include <unistd.h>
 #include <pthread.h>
-#include "sem.h"
 
 using namespace std;
 
@@ -535,7 +534,9 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
     }
 
     // write stirng stream to file here
-    argv[1][strlen(argv[1])-4] = '\0';
+    char *tempChar;
+    tempChar = strrchr(argv[1], '.');
+    *tempChar = '\0';
 	ofstream output_file(strcat(argv[1], "Snipped.csv"));
 
 	if (output_file.is_open()) {
@@ -547,7 +548,7 @@ int main(int argc, char **argv) {  //get arguments from command line, i.e., your
 				argv[1] << endl;
 
         for( i=0; i < tid.size(); ++i){
-            pthread_join( tid[i], NULL);                // Wait for any loading threads still waiting to complete before continuing
+            pthread_join( tid[i], NULL);                // Wait for any loading threads still waiting to complete before writing results to file
             output_file << twoSamples[i] -> output;
         }
 
