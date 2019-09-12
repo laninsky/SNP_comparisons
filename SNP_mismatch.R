@@ -1,10 +1,31 @@
 SNP_mismatch <- function(working_dir,input_structure_file) {
   setwd(working_dir)
   library(tidyverse)
-  write.csv(t(read.table(input_structure_file,header=FALSE)),"transposed_structure.csv",row.names=FALSE,quote=FALSE)
+  
+  # Skipping header line if present in the file (e.g. '# Stacks v2.2;  Structure v2.3; September 05, 2019')
+  if (length(unlist(strsplit(readLines(input_structure_file)[1],split = " |\t")))!=length(unlist(strsplit(readLines(input_structure_file)[2],split = " |\t")))) {
+    # Checking if locus name header present in file and skipping this if so
+    if (length(which(unlist(strsplit(readLines(input_structure_file)[2],split = " |\t"))!="")==TRUE)!=length(unlist(strsplit(readLines(input_structure_file)[3],split = " |\t")))) {
+      write.csv(t(read.table(input_structure_file,header=FALSE,skip=2)),"transposed_structure.csv",row.names=FALSE,quote=FALSE)
+    } else {
+      write.csv(t(read.table(input_structure_file,header=FALSE,skip=1)),"transposed_structure.csv",row.names=FALSE,quote=FALSE)
+     }          
+  } else { # if no header line present in file...
+    # Checking if locus name header present in file and skipping this if so
+    if (length(which(unlist(strsplit(readLines(input_structure_file)[1],split = " |\t"))!="")==TRUE)!=length(unlist(strsplit(readLines(input_structure_file)[2],split = " |\t")))) {
+    write.csv(t(read.table(input_structure_file,header=FALSE,skip=1)),"transposed_structure.csv",row.names=FALSE,quote=FALSE)
+    } else {
+      write.csv(t(read.table(input_structure_file,header=FALSE)),"transposed_structure.csv",row.names=FALSE,quote=FALSE)
+    }
+  }
+  
   data <- readr::read_csv("transposed_structure.csv",skip=1)
   
   output <- tibble(sample1 = character(), sample2 = character(), total_SNPs = integer(), mismatched_SNPs = integer(), mismatch_perc = integer(), mismatch_both_hets = integer(), both_hets_perc = integer(), mismatch_both_homs = integer(), both_homs_perc = integer(), mismatch_het_hom = integer(), non_both_hets_perc_het_hom = integer())
+  
+  # Need to figure out what code is used for missing data. Generally if SNPs are coded as 1-4, missing data will be 0. If coded as 0-3, -9 will be missing data
+  # will look for minimum value present in dataframe and set this as misssing data
+  missing_data_value <- min(data)
   
   # For every second column
   for (i in (seq(1,(length(names(data))-4),2))) {
@@ -18,7 +39,7 @@ SNP_mismatch <- function(working_dir,input_structure_file) {
       indiv_subset <-  data %>% select(col1,col2,col3,col4)  # subsetting to individuals
       #Look, I'm not happy about the following. I think it looks ugly as shit. HOWEVER, trying to subset based on the col names
       #did not work, so I think this is the best workaround without having to do some kind of crazy enquo/quo thing
-      rows_with_data_for_both <- indiv_subset %>% filter(indiv_subset[,1]!=-9 & indiv_subset[,2]!=-9 & indiv_subset[,3]!=-9 & indiv_subset[,4]!=-9)
+      rows_with_data_for_both <- indiv_subset %>% filter(indiv_subset[,1]!=missing_data_value & indiv_subset[,2]!=missing_data_value & indiv_subset[,3]!=missing_data_value & indiv_subset[,4]!=missing_data_value)
       mismatching_SNPs <- rows_with_data_for_both %>% filter(rows_with_data_for_both[,1]!=rows_with_data_for_both[,3] | rows_with_data_for_both[,2]!=rows_with_data_for_both[,4])
       hard_mismatch_both_hets <- mismatching_SNPs %>% filter(mismatching_SNPs[,1]!=mismatching_SNPs[,2] & mismatching_SNPs[,3]!=mismatching_SNPs[,4])
       double_dropout <- mismatching_SNPs %>% filter(mismatching_SNPs[,1]==mismatching_SNPs[,2] & mismatching_SNPs[,3]==mismatching_SNPs[,4])
@@ -32,8 +53,7 @@ SNP_mismatch <- function(working_dir,input_structure_file) {
       output <- add_row(output,sample1=col1, sample2=col3,total_SNPs=dim(rows_with_data_for_both)[1],mismatched_SNPs=dim(mismatching_SNPs)[1],mismatch_perc=round(((dim(mismatching_SNPs)[1])/(dim(rows_with_data_for_both)[1])*100),2),mismatch_both_hets=dim(hard_mismatch_both_hets)[1],both_hets_perc=round(((dim(hard_mismatch_both_hets)[1])/(dim(mismatching_SNPs)[1])*100),2),mismatch_both_homs=dim(double_dropout)[1],both_homs_perc=round(((dim(double_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2),mismatch_het_hom=dim(single_dropout)[1],non_both_hets_perc_het_hom=round(((dim(single_dropout)[1])/(dim(mismatching_SNPs)[1])*100),2))
     }
   }
-output %>% arrange(mismatch_perc)
-library("ggplot2")
+output <- output %>% arrange(mismatch_perc)
 
 plot_midpoint=((max(output$non_both_hets_perc_het_hom,na.rm=TRUE))+(min(output$non_both_hets_perc_het_hom,na.rm=TRUE)))/2
 
